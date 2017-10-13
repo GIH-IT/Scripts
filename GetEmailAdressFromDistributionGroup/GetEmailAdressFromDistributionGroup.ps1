@@ -6,11 +6,11 @@
 ### Parameters
 Param(
   [Parameter(Mandatory=$false, Position=0)]
-  [string]$DCTarget = "gihdc03.ihs.se"
+  [string]$DCTarget = "gihdc03.ihs.se",
   [Parameter(Mandatory=$false, Position=1)]
-  [string]$GroupsOU = "OU=DistributionGroupsStudents,OU=Groups,OU=GIH,DC=ihs,DC=se"
+  [string]$GroupsOU = "OU=DistributionGroupsStudents,OU=Groups,OU=GIH,DC=ihs,DC=se",
   [Parameter(Mandatory=$false, Position=2)]
-  [string]$UsersOU = "OU=StudentAccounts,OU=Users,OU=GIH,DC=ihs,DC=se"
+  [string]$UsersOU = "OU=StudentAccounts,OU=Users,OU=GIH,DC=ihs,DC=se",
   [Parameter(Mandatory=$false, Position=3)]
   [string]$ExportFolderPath = $PSScriptRoot + "groups\"
 )
@@ -27,12 +27,18 @@ Import-Module ActiveDirectory
 ### Variables
 $DCTarget = "gihdc03.ihs.se"
 $Credentials = Get-Credential
-$Groups = Get-ADGroup -Server $DCTarget -Credential $Credentials -Filter * -SearchBase $GroupsOU
+$Groups = Get-ADGroup -Server $DCTarget -Credential $Credentials -Filter -Filter {name -like "*"} -SearchBase $GroupsOU
+
+
+### Create export folder
+If (!$ExportFolderPath) {
+  New-Item -path $ExportFolderPath -type Directory -Force
+}
 
 
 ### Script
-# Get users that are members of the current group in the loop and export them to "<ScriptRoot>\groups\<GroupName>.csv".
 ForEach($Group in $Groups){
+  # Get users that are members of the current group in the loop and export them to "<ScriptRoot>\groups\<GroupName>.csv".
   $SearchFilter = "CN=" + $Group.Name + "," + $GroupsOU
   $Users = Get-ADUser -Server $DCTarget -Credential $Credentials -Filter {memberOf -eq $SearchFilter} -SearchBase $UsersOU -Properties mail | Select mail | Export-CSV ($ExportFolderPath + $Group.Name + ".csv") -Encoding UTF8
 }

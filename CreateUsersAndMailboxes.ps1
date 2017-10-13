@@ -1,10 +1,10 @@
-#=================================================================================================================
-# CreateUserAndMailboxes v1.0 by Charlie Gustav Skog - https://www.github.com/neotheone/CreateUserAndMailboxes
+#===============================================================================================================================
+# CreateUserAndMailboxes v1.0 by Charlie Gustav Skog - https://github.com/GIH-IT/Scripts/blob/master/CreateUsersAndMailboxes.ps1
 # Script to create student accounts from CSV file (pnr,FirstName,LastName).
 # Make sure you have the Active Directory PowerShell module installed and are running this in an elevated terminal
 # CreateUserAndMailboxes.ps1 -InDataPath <path> $ResultPath <path>
 # ResultPath is not mandatory.
-#=================================================================================================================
+#===============================================================================================================================
 ### Parameters
 Param(
   [Parameter(Mandatory=$true, Position=0)]

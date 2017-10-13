@@ -1,10 +1,10 @@
-#===============================================================================================================================
-# CreateUserAndMailboxes v1.0 by Charlie Gustav Skog - https://github.com/GIH-IT/Scripts/blob/master/CreateUsersAndMailboxes.ps1
+#=======================================================================================================================================================
+# CreateUserAndMailboxes v1.0 by Charlie Gustav Skog - https://github.com/GIH-IT/Scripts/blob/master/CreateUsersAndMailboxes/CreateUsersAndMailboxes.ps1
 # Script to create student accounts from CSV file (pnr,FirstName,LastName).
-# Make sure you have the Active Directory PowerShell module installed and are running this in an elevated terminal
-# CreateUserAndMailboxes.ps1 -InDataPath <path> $ResultPath <path>
-# ResultPath is not mandatory.
-#===============================================================================================================================
+# Make sure you have the Active Directory PowerShell module installed and are running this in an elevated terminal.
+# CreateUserAndMailboxes.ps1 -InDataPath <path> -ResultPath <path>
+# InDataPath is mandatory.
+#=======================================================================================================================================================
 ### Parameters
 Param(
   [Parameter(Mandatory=$true, Position=0)]
@@ -19,7 +19,7 @@ $host.ui.RawUI.WindowTitle = "CreateUserAndMailboxes v1.0 by Charlie Gustav Skog
 
 
 ### Modules
-# Load the Active Directory module
+# Load the Active Directory module.
 Import-Module ActiveDirectory
 
 
@@ -70,7 +70,7 @@ Else {
   exit
 }
 
-# Set up PSSession
+# Set up PSSession.
 $MailServerPSSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri $MailServerTargetURI -Credential $ScriptCredentials -Authentication Kerberos -AllowRedirection
 Import-PSSession $MailServerPSSession -CommandName New-Mailbox
 
@@ -116,7 +116,7 @@ Function Get-RandomNumber() {
   Return $TempNumber
 }
 
-# Convert special characters
+# Function to convert special characters.
 Function Convert-ToLatinCharacters() {
   Param(
     [Parameter(Mandatory=$true, Position=0)]
@@ -125,7 +125,7 @@ Function Convert-ToLatinCharacters() {
   [Text.Encoding]::ASCII.GetString([Text.Encoding]::GetEncoding("Cyrillic").GetBytes($inputString))
 }
 
-# Function to write output to result file
+# Function to write output to result file.
 Function Write-Result() {
   Param(
     [Parameter(Mandatory=$true, Position=0)]
@@ -149,7 +149,7 @@ Function Set-Permissions() {
 }
 
 
-### Create Students loop
+### Script
 ForEach ($Student in $InData) {
   # Student variables.
   $StudentRandomPassword = Get-RandomPassword

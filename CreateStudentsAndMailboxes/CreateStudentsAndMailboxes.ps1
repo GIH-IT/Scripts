@@ -1,10 +1,10 @@
-#=======================================================================================================================================================
+#=================================================================================================================================================================
 # CreateStudentsAndMailboxes v1.0 by Charlie Gustav Skog - https://github.com/GIH-IT/Scripts/blob/master/CreateStudentsAndMailboxes/CreateStudentsAndMailboxes.ps1
-# Script to create Student accounts from CSV file (pnr,FirstName,LastName).
+# Script to create Student accounts from CSV file(pnr;FirstName;LastName).
 # Make sure you have the Active Directory PowerShell module installed and are running this in an elevated terminal.
 # CreateStudentsAndMailboxes.ps1 -InDataPath <path> -ResultPath <path>
 # InDataPath is mandatory.
-#=======================================================================================================================================================
+#=================================================================================================================================================================
 ### Parameters and Title
 # Set parameters.
 Param(

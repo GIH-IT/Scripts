@@ -1,8 +1,8 @@
-#===============================================================================================================================================================================================
+#=====================================================================================================================================================================================
 # GetEmailAdressFromADGroups v1.0 by Charlie Gustav Skog - https://github.com/GIH-IT/Scripts/blob/master/GetEmailAdressFromDistributionGroups/GetEmailAdressFromDistributionGroups.ps1
 # Script to get groups from an OU and then check another OU for users that are members of those groups and compile a list for each group.
 # GetEmailAdressFromADGroups.ps1 -DCTarget <hostname> -GroupsOU <path> -UsersOU <path> -ExportFolderPath <path>
-#===============================================================================================================================================================================================
+#=====================================================================================================================================================================================
 ### Parameters and Title
 # Set parameters.
 Param(

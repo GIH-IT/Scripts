@@ -1,9 +1,9 @@
-#=========================================================================================================================================================================================
+#============================================================================================================================================================================================================================================
 # ActivateMailboxAndGeneratePassword v1.0 by Charlie Gustav Skog - https://github.com/GIH-IT/Scripts/blob/master/ActivateMailboxAndGeneratePassword/ActivateMailboxAndGeneratePassword.ps1
-# Script to activate the mailbox of newly created students and change their password.
+# Script to activate the mailbox of Students from a PDB User Create log(change_id;fkey_pdb_id;id_type;uuid;posix_namn;comment;change_dict;change_type;changed_at;changed_by_system;changed_by_user;logger_version) and change their password.
 # ActivateMailboxAndGeneratePassword.ps1 -InDataPath <path> -ResultPath <path>
 # InDataPath is mandatory.
-#=========================================================================================================================================================================================
+#============================================================================================================================================================================================================================================
 ### Parameters, Title, Checks, Variables and PSSessions.
 # Set parameters
 Param(

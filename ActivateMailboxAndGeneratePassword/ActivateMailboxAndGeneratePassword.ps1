@@ -10,7 +10,7 @@ Param(
   [Parameter(Mandatory=$true, Position=0)]
   [string]$InDataPath,
   [Parameter(Mandatory=$false, Position=1)]
-  [string]$ResultPath = $PSScriptRoot + $(Get-Item $InDataPath).BaseName + "-log.csv"
+  [string]$ResultPath = $PSScriptRoot + "\" + $(Get-Item $InDataPath).BaseName + "-log.csv"
 )
 
 # Set PowerShell title.
@@ -61,7 +61,9 @@ Else {
 $MailServerPSSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri $MailServerTargetURI -Credential $ScriptCredentials -Authentication Kerberos -AllowRedirection
 $DCPSSession = New-PSSession -ComputerName $DCTarget -Credential $ScriptCredentials -Authentication Kerberos
 Import-PSSession $MailServerPSSession -CommandName Enable-Mailbox
+Import-PSSession $MailServerPSSession -CommandName Set-MailUser
 Import-PSSession $DCPSSession -CommandName Get-ADUser
+Import-PSSession $DCPSSession -CommandName Set-ADUser
 Import-PSSession $DCPSSession -CommandName Set-ADAccountPassword
 
 
@@ -109,22 +111,28 @@ Function Write-Result() {
 ### Script
 ForEach ($Student in $InData) {
   # Get Student object.
-  $StudentUser = Get-ADUser -Identity $Student. -Credential $ScriptCredentials -Server $DCTarget -Properties *
+  $StudentUser = Get-ADUser -Identity $Student.posix_namn -Credential $ScriptCredentials -Server $DCTarget -Properties *
 
   # Student variables.
   $StudentRandomPassword = Get-RandomPassword
   $StudentRandomPasswordSecure = New-SecureString $StudentRandomPassword
   $StudentName = $StudentUser.Name
-  $StudentDisplayName = $StudentUser.DisplayName
+  $StudentDisplayName = $StudentUser.GivenName + " " + $StudentUser.Surname
   $StudentSAM = $StudentUser.SamAccountName
   $StudentMail = $StudentUser.mail
   $StudentPNR = $StudentUser.EmployeeID
 
+  # Clear ProxyAddresses
+  Set-AdUser -Identity $StudentSAM -Clear ProxyAddresses
+
+  # Set ExternalEmailAddress
+  Set-MailUser -Identity $StudentSAM -ExternalEmailAddress $StudentMail
+
   # Activate the Student mailbox.
-  Enable-Mailbox -Identity $StudentUser -Database $StudentMailDatabase
+  Enable-Mailbox -Identity $StudentSAM -Database $StudentMailDatabase
 
   # Change the Student password.
-  Set-ADAccountPassword -Identity $StudentUser -NewPassword $StudentRandomPasswordSecure
+  Set-ADAccountPassword -Identity $StudentSAM -NewPassword $StudentRandomPasswordSecure
 
   # Write out to result file.
   Write-Result -path $ResultPath -data "$StudentName;$StudentDisplayName;$StudentSAM;$StudentMail;$StudentPNR;$StudentRandomPassword"

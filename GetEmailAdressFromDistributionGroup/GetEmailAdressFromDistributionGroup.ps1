@@ -28,7 +28,7 @@ Import-Module ActiveDirectory
 ### Variables
 $DCTarget = "gihdc03.ihs.se"
 $Credentials = Get-Credential
-$Groups = Get-ADGroup -Server $DCTarget -Credential $Credentials -Filter -Filter {name -like "*"} -SearchBase $GroupsOU
+$Groups = Get-ADGroup -Server $DCTarget -Credential $Credentials -Filter {name -like "*"} -SearchBase $GroupsOU
 
 
 ### Create export folder

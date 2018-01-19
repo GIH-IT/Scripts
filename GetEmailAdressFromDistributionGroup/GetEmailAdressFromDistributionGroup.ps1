@@ -3,7 +3,8 @@
 # Script to get groups from an OU and then check another OU for users that are members of those groups and compile a list for each group.
 # GetEmailAdressFromADGroups.ps1 -DCTarget <hostname> -GroupsOU <path> -UsersOU <path> -ExportFolderPath <path>
 #===============================================================================================================================================================================================
-### Parameters
+### Parameters and Title
+# Set parameters.
 Param(
   [Parameter(Mandatory=$false, Position=0)]
   [string]$DCTarget = "gihdc03.ihs.se",
@@ -15,7 +16,7 @@ Param(
   [string]$ExportFolderPath = $PSScriptRoot + "groups\"
 )
 
-### Script title
+# Set script title.
 $host.ui.RawUI.WindowTitle = "GetEmailAdressFromDistributionGroups v1.0 by Charlie Gustav Skog"
 
 

@@ -46,6 +46,7 @@ Import-PSSession $DCPSSession -CommandName Get-ADGroup
 # Get Groups from Active Directory.
 $Groups = Get-ADGroup -Server $DCTarget -Credential $ScriptCredentials -LDAPFilter "(name=$GroupPrefix*)" -SearchBase $GroupsOU -Properties *
 
+
 ### Script
 ForEach ($Group in $Groups) {
   Enable-DistributionGroup -Identity $Group.Name

@@ -1,31 +1,51 @@
 #============================================================================================================================================================================================================================================
 # ActivateMailboxAndGeneratePassword v1.0 by Charlie Gustav Skog - https://github.com/GIH-IT/Scripts/blob/master/ActivateMailboxAndGeneratePassword/ActivateMailboxAndGeneratePassword.ps1
 # Script to activate the mailbox of Students from a PDB User Create log(change_id;fkey_pdb_id;id_type;uuid;posix_namn;comment;change_dict;change_type;changed_at;changed_by_system;changed_by_user;logger_version) and change their password.
-# ActivateMailboxAndGeneratePassword.ps1 -InDataPath <path> -ResultPath <path>
+# ActivateMailboxAndGeneratePassword.ps1 -InDataFile <path> -ResultPath <path>
 # InDataPath is mandatory.
 #============================================================================================================================================================================================================================================
-### Parameters, Title, Checks, Variables and PSSessions.
+### Parameters, Title, Checks, Variables, Modules and PSSessions.
 # Set parameters
 Param(
   [Parameter(Mandatory=$true, Position=0)]
-  [string]$InDataPath,
+  [string]$InDataFile,
   [Parameter(Mandatory=$false, Position=1)]
-  [string]$ResultPath = $PSScriptRoot + "\" + $(Get-Item $InDataPath).BaseName + "-log.csv"
+  [string]$OutputPath = $PSScriptRoot + "\Output\",
+  [Parameter(Mandatory=$false, Position=2)]
+  [string]$PDFModule = $PSScriptRoot + "\PDF-Form.psm1",
+  [Parameter(Mandatory=$false, Position=3)]
+  [string]$iTextSharp = $PSScriptRoot + "\itextsharp.dll",
+  [Parameter(Mandatory=$false, Position=4)]
+  [string]$PDFTemplate = $PSScriptRoot + "\PDFTemplate.pdf"
 )
 
 # Set PowerShell title.
-$host.ui.RawUI.WindowTitle = "ActivateMailboxAndGeneratePassword v1.0 by Charlie Gustav Skog"
+$host.ui.RawUI.WindowTitle = "ActivateMailboxAndGeneratePassword v2.0 by Charlie Gustav Skog"
 
-# Check if input file exists. If it doesn't, exit script.
-If (Test-Path $InDataPath) {}
+# Check if input files exists. If they don't, exit script.
+If (Test-Path $InDataFile) {}
 Else {
-  Write-Host "Input file not found."
+  Write-Host "Data file not found, exiting script."
   exit
 }
-
-# Check if result file already exists. If it does, exit script.
-If (Test-Path $ResultPath) {
-  Write-Host $ResultPath "already exists."
+If (Test-Path $OutputPath) {}
+Else {
+  Write-Host "Output path not found, exiting script."
+  exit
+}
+If (Test-Path $PDFModule) {}
+Else {
+  Write-Host "iTextSharp not found, exiting script."
+  exit
+}
+If (Test-Path $iTextSharp) {}
+Else {
+  Write-Host "iTextSharp not found, exiting script."
+  exit
+}
+If (Test-Path $PDFTemplate) {}
+Else {
+  Write-Host "PDF template not found, exiting script."
   exit
 }
 
@@ -34,13 +54,17 @@ $ScriptCredentials = Get-Credential
 $DCTarget = "gihdc03.ihs.se"
 $MailServerTarget = "gihex02.ihs.se"
 $MailServerTargetURI = "http://" + $MailServerTarget + "/powershell/"
-$InData = ConvertFrom-CSV -Delimiter ";" $(Get-Content $InDataPath)
+$InData = ConvertFrom-CSV -Delimiter ";" $(Get-Content $InDataFile)
 $StudentMailDatabase = "GIH-STUD01"
 $StudentOU = "OU=StudentAccounts,OU=Users,OU=GIH,DC=ihs,DC=se"
+$ResultFile = $OutputPath + $(Get-Item $InDataFile).BaseName + "\" + $(Get-Item $InDataFile).BaseName + "-log.csv"
 $ResultHeaders = "StudentName;StudentDisplayName;StudentSAMAccountName;StudentMail;StudentPNR;StudentPassword"
 
+# Modules
+Import-Module $PDFModule
+
 # Create result file and write headers.
-New-Item $ResultPath -Force
+New-Item $ResultFile -Force
 $ResultHeaders >> $ResultPath
 
 # Check connection to Exchange server, if down exit script.
@@ -100,11 +124,11 @@ Function Get-RandomPassword() {
 Function Write-Result() {
   Param(
     [Parameter(Mandatory=$true, Position=0)]
-    [string]$path,
+    [string]$file,
     [Parameter(Mandatory=$true, Position=1)]
     [string]$data
   )
-  $data >> $path
+  $data >> $file
 }
 
 
@@ -119,14 +143,9 @@ ForEach ($Student in $InData) {
   $StudentName = $StudentUser.Name
   $StudentDisplayName = $StudentUser.GivenName + " " + $StudentUser.Surname
   $StudentSAM = $StudentUser.SamAccountName
-  $StudentMail = $StudentUser.mail
+  $StudentMail = $StudentUser.UserPrincipalName
   $StudentPNR = $StudentUser.EmployeeID
-
-  # Clear ProxyAddresses
-  Set-AdUser -Identity $StudentSAM -Clear ProxyAddresses
-
-  # Set ExternalEmailAddress
-  Set-MailUser -Identity $StudentSAM -ExternalEmailAddress $StudentMail
+  $OutputPDF = $OutputPath + $(Get-Item $InDataFile).BaseName + "\" + $StudentPNR + ".pdf"
 
   # Activate the Student mailbox.
   Enable-Mailbox -Identity $StudentSAM -Database $StudentMailDatabase
@@ -135,5 +154,11 @@ ForEach ($Student in $InData) {
   Set-ADAccountPassword -Identity $StudentSAM -NewPassword $StudentRandomPasswordSecure
 
   # Write out to result file.
-  Write-Result -path $ResultPath -data "$StudentName;$StudentDisplayName;$StudentSAM;$StudentMail;$StudentPNR;$StudentRandomPassword"
+  Write-Result -file $ResultFile -data "$StudentName;$StudentDisplayName;$StudentSAM;$StudentMail;$StudentPNR;$StudentRandomPassword"
+
+  # Show PDF form fields.
+  Get-PdfFieldNames -FilePath $PDFTemplate -ITextLibraryPath $iTextSharp
+
+  # Generate PDF.
+  Save-PdfField -Fields @{'name' = "$StudentDisplayName";'studentpnr' = "$StudentPNR";'mail' = "$StudentMail";'username' = "$StudentSAM";'password' = "$StudentRandomPassword"} -InputPdfFilePath $PDFTemplate -ITextSharpLibrary $iTextSharp -OutputPdfFilePath $OutputPDF
 }

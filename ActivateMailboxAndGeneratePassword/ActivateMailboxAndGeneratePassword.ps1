@@ -55,10 +55,11 @@ $DCTarget = "gihdc03.ihs.se"
 $MailServerTarget = "gihex02.ihs.se"
 $MailServerTargetURI = "http://" + $MailServerTarget + "/powershell/"
 $InData = ConvertFrom-CSV -Delimiter ";" $(Get-Content $InDataFile)
+$StudentMailDomainSuffix = "@student.gih.se"
 $StudentMailDatabase = "GIH-STUD01"
-$StudentOU = "OU=StudentAccounts,OU=Users,OU=GIH,DC=ihs,DC=se"
+$StudentDescription = "Activated by script ActivateMailboxAndGeneratePassword v2.0 run by " + $ScriptCredentials.UserName
 $ResultFile = $OutputPath + $(Get-Item $InDataFile).BaseName + "\" + $(Get-Item $InDataFile).BaseName + "-log.csv"
-$ResultHeaders = "StudentName;StudentDisplayName;StudentSAMAccountName;StudentMail;StudentPNR;StudentPassword"
+$ResultHeaders = "StudentName;StudentDisplayName;StudentSAMAccountName;StudentMail;StudentPNR;StudentPassword;StudentActivated;StudentNotActivatedReason"
 
 # Modules
 Import-Module $PDFModule
@@ -144,17 +145,32 @@ ForEach ($Student in $InData) {
   $StudentDisplayName = $StudentUser.GivenName + " " + $StudentUser.Surname
   $StudentSAM = $StudentUser.SamAccountName
   $StudentMail = $StudentUser.UserPrincipalName
+  $StudentAlias = $StudentMail.Replace($StudentMailDomainSuffix,"")
   $StudentPNR = $StudentUser.EmployeeID
+  $StudentActivated = "Yes"
+  $StudentNotActivatedReason = ""
   $OutputPDF = $OutputPath + $(Get-Item $InDataFile).BaseName + "\" + $StudentPNR + ".pdf"
 
+  # Check if Student already has a description to verify if this is the first run.
+  If ($StudentUser.Description) {
+    $StudentActivated = "No"
+    $StudentNotActivatedReason = "already activated"
+    Write-Host $StudentDisplayName $StudentNotActivatedReason"."
+    Write-Result -path $ResultPath -data "$StudentName;$StudentDisplayName;$StudentSAM;$StudentUPN;$StudentPNR;$StudentRandomPassword;$StudentActivated;$StudentNotActivatedReason"
+    Continue
+  }
+
   # Activate the Student mailbox.
-  Enable-Mailbox -Identity $StudentSAM -Database $StudentMailDatabase
+  Enable-Mailbox -Identity $StudentSAM -Alias $StudentAlias -Database $StudentMailDatabase
 
   # Change the Student password.
   Set-ADAccountPassword -Identity $StudentSAM -NewPassword $StudentRandomPasswordSecure
 
+  # Set Student description.
+  Set-ADUser -Identity $StudentSAM -Description $StudentDescription
+
   # Write out to result file.
-  Write-Result -file $ResultFile -data "$StudentName;$StudentDisplayName;$StudentSAM;$StudentMail;$StudentPNR;$StudentRandomPassword"
+  Write-Result -file $ResultFile -data "$StudentName;$StudentDisplayName;$StudentSAM;$StudentMail;$StudentPNR;$StudentRandomPassword;$StudentActivated;$StudentNotActivatedReason"
 
   # Show PDF form fields.
   Get-PdfFieldNames -FilePath $PDFTemplate -ITextLibraryPath $iTextSharp
